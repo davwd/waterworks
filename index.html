@@ -1,0 +1,196 @@
+const char index_html[] PROGMEM = R"rawliteral(
+<!DOCTYPE HTML>
+<html>
+	<head>
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+			<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL,GRAD@400,0,0" />
+			
+			<style>
+				body {
+					font-family: Arial;
+					background-color: Indigo;
+					color: LightGray;
+					margin: 0 1rem;
+					height: 100vh;
+					min-width: 330px;
+				}
+				
+				.logo {
+					width: 100px;
+					margin: 1rem 0;
+				}
+				
+				.container {
+					display: flex;
+					flex-direction: column;
+					align-items: center;
+					text-align: center;
+					justify-content: space-evenly;
+					gap: 1rem;
+					height: 75vh;
+				}
+				
+				h2 {
+					font-size: min(8vw, 4rem);
+					max-width: 800px;
+				}
+				
+				h3 {
+					margin-top: 0px;
+					margin-bottom: 60px;
+				}
+				
+				.list {
+					text-align: left;
+					max-width: 600px;
+				}
+				
+				p {
+					font-size: min(1.5rem, 6vw);
+					margin: 0.7rem 0;
+					vertical-align: middle;
+				}
+
+				.material-symbols-outlined {
+					font-size: min(4rem, 10vw);
+					color: Gold;
+					vertical-align: middle;
+				}
+				
+				.labels {
+					color: Gold;
+				}
+				
+				.units {
+					font-size: 1.2rem;
+				}
+
+				button {
+					background: rgba(255, 255, 255, 0.15);
+					border: 1px solid rgba(255, 255, 255, 0.2);
+					border-radius: 14px;
+					padding: 10px 20px;
+					font-size: 16px;
+					color: #fff;
+					backdrop-filter: blur(10px);
+					box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+					transition: all 0.2s ease;
+					cursor: pointer;
+				}
+
+				button:hover {
+					background: rgba(255, 255, 255, 0.25);
+					box-shadow: 0 6px 14px rgba(0, 0, 0, 0.15);
+					transform: scale(1.02);
+				}
+
+			</style>
+	</head>
+	
+	<body>
+		<!-- <img src="https://www.lsu.edu/_resources_fierce/svgs/lsu-logo.svg" class="logo" alt="LSU Logo"> -->
+		<div class="container">
+			<h2>RAINWATER COLLECTION SYSTEM</h2>
+			
+			<div class="list">
+				<p>
+					<!-- <span class="material-symbols-outlined">water_medium</span> -->
+					<span class="labels">Tank Level:</span>
+					<span id="level">%LEVEL%</span>
+				</p>
+				<p>
+					<!-- <span class="material-symbols-outlined">water_drop</span> -->
+					<span class="labels">Stored Rainwater:</span>
+					<span id="volume">%VOLUME%</span>
+				</p>
+				<p>
+					<!-- <span class="material-symbols-outlined">thermometer</span> -->
+					<span class="labels">Temperature:</span>
+					<span id="temp">%TEMP%</span>
+				</p>
+				<p>
+				<!-- <span class="material-symbols-outlined">heat</span> -->
+				<span class="labels">Humidity:</span>
+				<span id="humidity">%HUMIDITY%</span>
+				</p>
+				<p>
+					<!-- <span class="material-symbols-outlined">dew_point</span> -->
+					<span class="labels">Dew Point:</span>
+					<span id="dewPoint">%DEW%</span>
+					</p>
+				<p>
+					<!-- <span class="material-symbols-outlined">router</span> -->
+					<span class="labels">Signal Strength:</span>
+					<span id="signal">%SIGNAL%</span>
+					<span class="units">dBm</span>
+				</p>
+				<p>
+					<!-- <span class="material-symbols-outlined">history</span> -->
+					<span class="labels">System Runtime:</span>
+					<span id="time">%TIME%</span>
+				</p>
+			</div>
+			<button onclick="setVmax()">Set Max Level</button>
+			<br>
+			<div>
+				<button onclick="fetch('/ONLINE_CONTROL')">Start Control</button>
+				<span id="ONLINE_CONTROL">%CONTROL%</span>
+				<button onclick="fetch('/next_mode')">Change Fan Mode</button>
+			</div>
+		</div>
+	</body>
+</html>
+
+
+<!-- ====================================================================== -->
+<script>
+	
+	if (!!window.EventSource) {
+		var source = new EventSource('/events');
+		
+		source.addEventListener('open', function(e) {
+			console.log("Events Connected");
+		}, false);
+		
+		source.addEventListener('error', function(e) {
+			if (e.target.readyState != EventSource.OPEN) {
+				console.log("Events Disconnected");
+			}
+		}, false);
+		
+		// Event listener for connection loss.
+		//needs work. I don't think it is working.
+		window.addEventListener('offline', function() {
+			console.log('Connection lost. Reloading page...');
+			// Check if the page is already attempting to reload
+			if (!window.reloading) {
+				window.reloading = true;
+				location.reload();
+			}
+		});
+	
+		source.addEventListener('payload', function(e) {
+			const data = JSON.parse(e.data);
+			
+			document.getElementById("level").innerHTML = data.level;
+			document.getElementById("volume").innerHTML = data.volume;
+			document.getElementById("temp").innerHTML = data.temp;
+			document.getElementById("humidity").innerHTML = data.humidity;
+			document.getElementById("dewPoint").innerHTML = data.dewPoint;
+			document.getElementById("signal").innerHTML = data.signal;
+			document.getElementById("time").innerHTML = data.time;
+			document.getElementById("ONLINE_CONTROL").innerHTML = data.ONLINE_CONTROL;
+		}, false);
+	}
+	
+	function setVmax() {
+		fetch('/setVmax').then(response => {
+			if (response.ok) console.log("Vmax set successfully!");
+		});
+	}
+
+
+</script>
+</html>
+)rawliteral";
+
